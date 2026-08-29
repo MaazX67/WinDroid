@@ -1,11 +1,10 @@
-name: Build WinDroid APK
+name: Build and Release WinDroid APK
 
 on:
   push:
-    branches: [ "main", "master" ]
-  pull_request:
-    branches: [ "main", "master" ]
-  workflow_dispatch:  # Manual run ka button
+    tags:
+      - 'v*'  # v1.0, v1.1 jaise tag pe release banegi
+  workflow_dispatch:  # Manual button bhi
 
 jobs:
   build:
@@ -16,4 +15,33 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set up JDK 17
-      uses:
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: gradle
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    - name: Build Release APK
+      run: ./gradlew assembleRelease --stacktrace
+      # Note: Debug ke liye assembleDebug likhna
+
+    - name: Rename APK
+      run: mv app/build/outputs/apk/release/app-release.apk WinDroid-v${{ github.ref_name }}.apk
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: WinDroid-v${{ github.ref_name }}.apk
+        name: WinDroid ${{ github.ref_name }}
+        body: |
+          ## WinDroid ${{ github.ref_name }}
+          Windows .exe apps ko Android pe chalao - Box64 + Wine
+          
+          **Install:** APK download karke install kar lo
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

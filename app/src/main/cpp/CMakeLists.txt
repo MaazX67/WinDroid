@@ -27,8 +27,17 @@ target_include_directories(wincore PRIVATE
 # Link Android log library
 target_link_libraries(wincore PRIVATE log)
 
-# Original native_loader library
-add_library(windroid SHARED native_loader.c)
+# Original native_loader library with JNI bridge
+add_library(windroid SHARED 
+    native_loader.c
+    native_jni_bridge.cpp
+)
+
+# Include directories for windroid JNI bridge
+target_include_directories(windroid PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/wincore
+)
 
 # Link windroid to wincore so JNI can access it
 target_link_libraries(windroid PRIVATE wincore log)

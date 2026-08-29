@@ -97,10 +97,3 @@ Build:
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Release created successfully
-        run: |
-          echo "✅ GitHub Release created successfully with APK uploaded"
-          echo "Release tag: ${{ github.ref_name }}"
-          ls -lah WinDroid-universal-*.apk
-EOF

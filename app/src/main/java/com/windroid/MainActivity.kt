@@ -1,96 +1,146 @@
 package com.windroid
-import android.app.Activity
-import android.content.Intent
-import android.os.Bundle
-import android.widget.*
-import android.graphics.Color
-import android.view.Gravity
-import android.os.Environment
-import java.io.File
 
-class MainActivity : Activity() {
-    var cDrive = File("/sdcard/Download/WinDroid/C_Drive")
-    var currentTheme = "98"
+import android.os.Bundle
+import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+
+class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if(!cDrive.exists()) cDrive.mkdirs()
-        
-        val root = LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setBackgroundColor(Color.parseColor("#008080")) }
-        
-        // Title Bar with Theme Switcher
-        val titleBar = LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL; setBackgroundColor(Color.parseColor("#000080")); setPadding(8,8,8,8) }
-        val title = TextView(this).apply { text="WinDroid V4 - Real + Fun - Itel S25"; setTextColor(Color.WHITE); layoutParams=LinearLayout.LayoutParams(0,-2,1f) }
-        val themeBtn = Button(this).apply { text="Theme"; setOnClickListener{
-            currentTheme = when(currentTheme){ "98"->"XP"; "XP"->"7"; "7"->"11"; else->"98" }
-            Toast.makeText(context,"Theme: Windows $currentTheme",0).show()
-        }}
-        titleBar.addView(title); titleBar.addView(themeBtn)
-        titleBar.addView(Button(this).apply { text="X"; setBackgroundColor(Color.RED); setOnClickListener{finish()} })
-
-        val scroll = ScrollView(this)
-        val body = LinearLayout(this).apply { orientation=LinearLayout.VERTICAL; setBackgroundColor(Color.parseColor("#C0C0C0")); setPadding(12,12,12,12) }
-
-        // Desktop Icons - Mazedaar
-        val desktopLabel = TextView(this).apply { text="🖥️ Desktop - C: Drive Real: ${cDrive.path}"; setTextColor(Color.BLACK) }
-        val desktopRow = LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
-        desktopRow.addView(Button(this).apply { text="💻\nMy Computer"; setOnClickListener{ listCdrive() } })
-        desktopRow.addView(Button(this).apply { text="🗑️\nRecycle Bin"; setOnClickListener{ Toast.makeText(context,"Recycle Bin Empty",0).show() } })
-        desktopRow.addView(Button(this).apply { text="🎮\nGames"; setOnClickListener{ openGamesFolder() } })
-
-        // Real DLL Resolver
-        val dllStatus = TextView(this).apply { text="🔍 DLL Resolver: C_Drive scan karo"; setBackgroundColor(Color.WHITE); setPadding(10,10,10,10) }
-        val btnScan = Button(this).apply {
-            text="🔍 Scan C: Drive for .exe + DLLs (REAL)"
-            setOnClickListener{
-                val exes = cDrive.walk().filter{ it.extension=="exe" }.toList()
-                val dlls = cDrive.walk().filter{ it.extension=="dll" }.toList()
-                val missing = listOf("d3d9.dll","xinput1_3.dll","msvcp140.dll").filter{ dll -> dlls.none{ it.name==dll } }
-                dllStatus.text="Found: ${exes.size} .exe, ${dlls.size} .dll\nMissing: ${if(missing.isEmpty()) "None - Ready to Run!" else missing.joinToString(", ")}\nC: Drive: ${cDrive.list()?.size ?:0} files"
+        setContent {
+            MaterialTheme(colorScheme = darkColorScheme()) {
+                WinDroidScreen()
             }
         }
-
-        // Real Driver Selector for Mali-G57
-        val driverLabel = TextView(this).apply { text="🎮 Mali-G57 Real Drivers (Itel S25 Optimized):"; setTextColor(Color.BLACK) }
-        val driverSpinner = Spinner(this).apply {
-            adapter = ArrayAdapter(context, android.R.layout.simple_spinner_dropdown_item, arrayOf("ANGLE_Mali - Best for Itel", "VirGL - OpenGL", "Zink_Adreno - Vulkan", "GL4ES - Legacy"))
-        }
-
-        // Mazedaar Apps Inside
-        val funLabel = TextView(this).apply { text="🎉 Mazedaar Windows Apps (Inside Emulator):"; setTextColor(Color.BLACK) }
-        val funRow = LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
-        funRow.addView(Button(this).apply { text="📝 Notepad"; setOnClickListener{ Toast.makeText(context,"Notepad: WinDroid is Awesome!",1).show() } })
-        funRow.addView(Button(this).apply { text="💀 BSOD"; setOnClickListener{ showBSOD() } })
-        funRow.addView(Button(this).apply { text="🧮 Calc"; setOnClickListener{ Toast.makeText(context,"2+2=4 - Windows Calculator",0).show() } })
-
-        // Real Gaming Controls
-        val gameLabel = TextView(this).apply { text="🕹️ Gaming Controls - Custom Mapper:"; setTextColor(Color.BLACK) }
-        val wasdRow = LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL; gravity=Gravity.CENTER }
-        wasdRow.addView(Button(this).apply { text="W" }); 
-        val wasdRow2 = LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL; gravity=Gravity.CENTER }
-        wasdRow2.addView(Button(this).apply { text="A" }); wasdRow2.addView(Button(this).apply { text="S" }); wasdRow2.addView(Button(this).apply { text="D" })
-        val joyRow = LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL }
-        joyRow.addView(Button(this).apply { text="L Joystick\n(Move)"; layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
-        joyRow.addView(Button(this).apply { text="R Joystick\n(Aim)"; layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
-
-        // RUN Button Real
-        val btnRun = Button(this).apply {
-            text="▶ RUN .EXE FROM C: DRIVE (REAL)"; setBackgroundColor(Color.parseColor("#00AA00")); setTextColor(Color.WHITE); textSize=16f
-            setOnClickListener{ Toast.makeText(context,"Launching from C_Drive with ${driverSpinner.selectedItem}...",1).show() }
-        }
-
-        // Taskbar - Mazedaar
-        val taskbar = LinearLayout(this).apply { orientation=LinearLayout.HORIZONTAL; setBackgroundColor(Color.parseColor("#000080")); setPadding(5,5,5,5) }
-        taskbar.addView(Button(this).apply { text="Start"; setOnClickListener{ Toast.makeText(context,"Start Menu: My Computer | Games | Settings",1).show() } })
-        taskbar.addView(TextView(this).apply { text=" FPS: 60 | CPU: 24% | RAM: 1.2GB "; setTextColor(Color.WHITE); layoutParams=LinearLayout.LayoutParams(0,-2,1f) })
-        taskbar.addView(TextView(this).apply { text="6:02 PM"; setTextColor(Color.WHITE) })
-
-        body.addView(desktopLabel); body.addView(desktopRow); body.addView(dllStatus); body.addView(btnScan)
-        body.addView(driverLabel); body.addView(driverSpinner); body.addView(funLabel); body.addView(funRow)
-        body.addView(gameLabel); body.addView(wasdRow); body.addView(wasdRow2); body.addView(joyRow); body.addView(btnRun)
-        scroll.addView(body); root.addView(titleBar); root.addView(scroll); root.addView(taskbar)
-        setContentView(root)
     }
-    fun listCdrive(){ Toast.makeText(this,"C_Drive: ${cDrive.list()?.joinToString(", ") ?: "Empty - Put .exe here!"}",1).show() }
-    fun openGamesFolder(){ Toast.makeText(this,"Put games in: /Download/WinDroid/C_Drive/",1).show() }
-    fun showBSOD(){ Toast.makeText(this,"💀 BSOD: Just Kidding! WinDroid is Stable 😎",1).show() }
+}
+
+data class AppItem(val name: String, val icon: ImageVector, val color: Color)
+
+@Composable
+fun WinDroidScreen() {
+    val context = LocalContext.current
+    val pinnedApps = listOf(
+        AppItem("File Explorer", Icons.Filled.Folder, Color(0xFF60A5FA)),
+        AppItem("Wine", Icons.Filled.WineBar, Color(0xFFA78BFA)),
+        AppItem("Box64", Icons.Filled.ViewInAr, Color(0xFFFB923C)),
+        AppItem("Settings", Icons.Filled.Settings, Color(0xFF9CA3AF)),
+        AppItem("Terminal", Icons.Filled.Terminal, Color(0xFF4ADE80)),
+        AppItem("Notepad", Icons.Filled.Article, Color(0xFF60A5FA)),
+        AppItem("Edge", Icons.Filled.Language, Color(0xFF22D3EE)),
+        AppItem("Photos", Icons.Filled.PhotoLibrary, Color(0xFF60A5FA)),
+        AppItem("Store", Icons.Filled.Shop, Color(0xFF93C5FD)),
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Brush.verticalGradient(listOf(Color(0xFF1E1B4B), Color(0xFF0F172A), Color(0xFF020617))))
+    ) {
+        Column(modifier = Modifier.fillMaxSize().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Row(modifier = Modifier.fillMaxWidth().padding(top=24.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.Android, null, tint = Color(0xFF60A5FA))
+                Spacer(Modifier.width(8.dp))
+                Text("WinDroid V4", color = Color.White.copy(0.8f), fontSize = 14.sp)
+            }
+            Spacer(Modifier.weight(1f))
+            Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(28.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B).copy(0.92f))) {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                        Text("Start", color = Color.White, fontSize = 26.sp, fontWeight = FontWeight.Bold)
+                        Row {
+                            Icon(Icons.Filled.Notifications, null, tint = Color.White, modifier = Modifier.padding(8.dp))
+                            Icon(Icons.Filled.Menu, null, tint = Color.White, modifier = Modifier.padding(8.dp))
+                        }
+                    }
+                    Text("Pinned", color = Color.White.copy(0.5f), fontSize = 12.sp, modifier = Modifier.padding(top=16.dp, bottom=12.dp))
+                    LazyVerticalGrid(columns = GridCells.Fixed(3), modifier = Modifier.height(300.dp), userScrollEnabled = false) {
+                        items(pinnedApps) { app ->
+                            Column(modifier = Modifier.padding(6.dp).clip(RoundedCornerShape(12.dp)).clickable { Toast.makeText(context, "Opening ${app.name}", Toast.LENGTH_SHORT).show() }.padding(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                                Box(modifier = Modifier.size(52.dp).clip(RoundedCornerShape(14.dp)).background(app.color.copy(0.18f)), contentAlignment = Alignment.Center) {
+                                    Icon(app.icon, null, tint = app.color, modifier = Modifier.size(28.dp))
+                                }
+                                Spacer(Modifier.height(6.dp))
+                                Text(app.name, color = Color.White, fontSize = 11.sp, maxLines = 1)
+                            }
+                        }
+                    }
+                    Text("Recommended", color = Color.White.copy(0.5f), fontSize = 12.sp, modifier = Modifier.padding(top=12.dp, bottom=8.dp))
+                    Card(shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF0F172A))) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Filled.Description, null, tint = Color.White.copy(0.8f), modifier = Modifier.size(24.dp))
+                                Spacer(Modifier.width(12.dp))
+                                Column {
+                                    Text("Documents > report.pdf", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                                    Text("Today • 2.4 MB", color = Color.White.copy(0.5f), fontSize = 11.sp)
+                                }
+                            }
+                            Spacer(Modifier.height(14.dp))
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Filled.Download, null, tint = Color.White.copy(0.8f), modifier = Modifier.size(24.dp))
+                                Spacer(Modifier.width(12.dp))
+                                Column {
+                                    Text("Downloads > dxvk-setup.exe", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Medium)
+                                    Text("Yesterday • 15.2 MB", color = Color.White.copy(0.5f), fontSize = 11.sp)
+                                }
+                            }
+                        }
+                    }
+                    Spacer(Modifier.height(16.dp))
+                    Divider(color = Color.White.copy(0.08f))
+                    Spacer(Modifier.height(12.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(modifier = Modifier.size(32.dp).clip(CircleShape).background(Color.Gray), contentAlignment = Alignment.Center) { Icon(Icons.Filled.Person, null, tint = Color.White) }
+                            Spacer(Modifier.width(8.dp))
+                            Column {
+                                Text("User", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                                Text("Administrator", color = Color.White.copy(0.5f), fontSize = 11.sp)
+                            }
+                        }
+                        Row {
+                            Icon(Icons.Filled.PowerSettingsNew, null, tint = Color.White, modifier = Modifier.padding(8.dp))
+                            Icon(Icons.Filled.Settings, null, tint = Color.White, modifier = Modifier.padding(8.dp))
+                        }
+                    }
+                }
+            }
+            Spacer(Modifier.height(16.dp))
+            Card(shape = RoundedCornerShape(32.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF1E293B).copy(0.95f))) {
+                Row(modifier = Modifier.padding(horizontal = 22.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+                    Icon(Icons.Filled.Search, null, tint = Color.White.copy(0.7f))
+                    Icon(Icons.Filled.Apps, null, tint = Color(0xFF60A5FA))
+                    Icon(Icons.Filled.Folder, null, tint = Color(0xFFFBBF24))
+                    Icon(Icons.Filled.WineBar, null, tint = Color(0xFFA78BFA))
+                    Icon(Icons.Filled.ViewInAr, null, tint = Color(0xFFFB923C))
+                    Icon(Icons.Filled.Language, null, tint = Color(0xFF22D3EE))
+                }
+            }
+            Spacer(Modifier.height(28.dp))
+        }
+    }
 }

@@ -1,5 +1,4 @@
-Build:
-    name: Build Release APK
+name: Build Release APK
     runs-on: ubuntu-latest
 
     steps:

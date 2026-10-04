@@ -2,6 +2,7 @@
 #include "jit_translator.h"
 #include "api_layer.h"
 #include <fstream>
+#include <cstring>
 #include <android/log.h>
 #include <sys/mman.h>
 #include <unistd.h>
@@ -144,7 +145,7 @@ bool WinCoreEngine::run() {
     }
 
     LOGI("JIT translated %zu bytes to ARM64", CODE_SECTION_SIZE);
-    LOGI("Compiled code at: %p", compiledCode);
+    LOGI("Compiled code at: %p", static_cast<void*>(compiledCode));
 
     // In full implementation, would:
     // 1. Execute ARM64 code via function pointer cast
@@ -230,14 +231,16 @@ bool WinCoreEngine::validatePEHeader() const {
     }
 
     // Check MZ signature (DOS header)
-    uint16_t mzSig = *reinterpret_cast<uint16_t*>(binaryData_.data());
+    uint16_t mzSig = 0;
+    std::memcpy(&mzSig, binaryData_.data(), sizeof(mzSig));
     if (mzSig != MZ_SIGNATURE) {
         LOGE("Invalid MZ signature: 0x%04X", mzSig);
         return false;
     }
 
     // Get offset to PE header (at offset 0x3C)
-    uint32_t peOffset = *reinterpret_cast<uint32_t*>(binaryData_.data() + 0x3C);
+    uint32_t peOffset = 0;
+    std::memcpy(&peOffset, binaryData_.data() + 0x3C, sizeof(peOffset));
     
     if (peOffset >= binaryData_.size() - 4) {
         LOGE("PE offset out of bounds: 0x%X", peOffset);
@@ -245,7 +248,8 @@ bool WinCoreEngine::validatePEHeader() const {
     }
 
     // Check PE signature
-    uint32_t peSig = *reinterpret_cast<uint32_t*>(binaryData_.data() + peOffset);
+    uint32_t peSig = 0;
+    std::memcpy(&peSig, binaryData_.data() + peOffset, sizeof(peSig));
     if ((peSig & 0xFFFF) != PE_SIGNATURE) {
         LOGE("Invalid PE signature: 0x%X", peSig);
         return false;
@@ -264,18 +268,16 @@ bool WinCoreEngine::initializeMemory() {
     // Allocate 16MB for binary code and data
     allocatedMemorySize_ = 16 * 1024 * 1024;
     
-    allocatedMemoryBase_ = reinterpret_cast<uintptr_t>(
-        mmap(nullptr, allocatedMemorySize_,
-             PROT_READ | PROT_WRITE | PROT_EXEC,
-             MAP_PRIVATE | MAP_ANONYMOUS,
-             -1, 0)
-    );
-
-    if (allocatedMemoryBase_ == static_cast<uintptr_t>(MAP_FAILED)) {
+    void* allocatedMemory = mmap(nullptr, allocatedMemorySize_,
+                                 PROT_READ | PROT_WRITE | PROT_EXEC,
+                                 MAP_PRIVATE | MAP_ANONYMOUS,
+                                 -1, 0);
+    if (allocatedMemory == MAP_FAILED) {
         LOGE("mmap failed to allocate %zu bytes", allocatedMemorySize_);
         allocatedMemoryBase_ = 0;
         return false;
     }
+    allocatedMemoryBase_ = reinterpret_cast<uintptr_t>(allocatedMemory);
 
     LOGI("Allocated %zu bytes at %p for binary execution",
          allocatedMemorySize_, reinterpret_cast<void*>(allocatedMemoryBase_));

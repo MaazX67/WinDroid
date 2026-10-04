@@ -1,5 +1,37 @@
 # APKRunner-Universal
 
+## Fusion host bridge
+
+The separate [`apk-runner-fusion`](apk-runner-fusion/README.md) target builds a Windows CLI that uses an existing ADB-connected Android guest to install an APK and request app launch. It does not bundle or boot Android, implement ART/Binder/ARM translation, or turn APKs into standalone Windows apps. A compatible Android guest, ADB platform-tools, and GUI/window integration must already be available on Windows.
+
+## Build status
+
+Verified in the Codespace: `./gradlew assembleDebug` builds the Android debug APK, the root CMake target builds the APK metadata inspector, and MinGW cross-compiles `build-fusion/APKRunner-Fusion.exe`. The APK build confirms packaging only; no Android device was available here to verify app runtime behavior. Fusion's install and launch commands require a separately installed ADB client and an already-running Android guest.
+
+## Install the Android app
+
+With Android platform-tools installed and an Android device connected over ADB:
+
+```sh
+adb install -r app/build/outputs/apk/debug/app-debug.apk
+adb shell monkey -p com.windroid -c android.intent.category.LAUNCHER 1
+```
+
+## Run the CLI
+
+Inspect an APK on Linux:
+
+```sh
+./build/APKRunner detect path/to/app.apk
+```
+
+Install and launch an APK through an ADB-connected guest on Windows:
+
+```powershell
+.\\build-fusion\\APKRunner-Fusion.exe install .\\app.apk
+.\\build-fusion\\APKRunner-Fusion.exe run com.example.app
+```
+
 APKRunner-Universal is an early native C++ project for inspecting Android APK archives. Its current executable detects likely engine markers, checks for a manifest and DEX files, and lists common Android native ABIs. It does **not** execute APKs or produce standalone Windows executables.
 
 ## Important technical scope

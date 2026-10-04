@@ -1,4 +1,12 @@
 .gradle/
+build/
+app/build/
 /tmp/
-.gradle/
-/tmp/
+local.properties
+**/local.properties
+*.log
+**/.cxx/
+/build-fusion/
+/build-fusion-linux/
+/build-fusion-win/
+/build-win/

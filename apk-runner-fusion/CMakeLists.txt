@@ -14,7 +14,15 @@ else()
 endif()
 
 if(WIN32 AND MINGW)
+    target_link_libraries(APKRunner-Fusion PRIVATE shell32 ole32 advapi32 uuid)
     target_link_options(APKRunner-Fusion PRIVATE -static -static-libgcc -static-libstdc++)
+    foreach(ADB_FILE adb.exe AdbWinApi.dll AdbWinUsbApi.dll NOTICE.txt)
+        add_custom_command(TARGET APKRunner-Fusion POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${CMAKE_CURRENT_SOURCE_DIR}/tools/adb/${ADB_FILE}"
+                "$<TARGET_FILE_DIR:APKRunner-Fusion>/${ADB_FILE}"
+        )
+    endforeach()
 endif()
 
 install(TARGETS APKRunner-Fusion RUNTIME DESTINATION bin)

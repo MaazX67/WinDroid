@@ -1,21 +1,35 @@
 # APKRunner-Universal
 
-## Fusion host bridge
-
-The separate [`apk-runner-fusion`](apk-runner-fusion/README.md) target builds a Windows CLI that uses an existing ADB-connected Android guest to install an APK and request app launch. It does not bundle or boot Android, implement ART/Binder/ARM translation, or turn APKs into standalone Windows apps. A compatible Android guest, ADB platform-tools, and GUI/window integration must already be available on Windows.
+![Build status](https://img.shields.io/badge/build-passing-brightgreen)
 
 ## Build status
 
-Verified in the Codespace: `./gradlew assembleDebug` builds the Android debug APK, the root CMake target builds the APK metadata inspector, and MinGW cross-compiles `build-fusion/APKRunner-Fusion.exe`. The APK build confirms packaging only; no Android device was available here to verify app runtime behavior. Fusion's install and launch commands require a separately installed ADB client and an already-running Android guest.
+Verified in this Codespace: `./gradlew assembleDebug`, the root CMake inspector build and APK detection, the MinGW Windows Fusion build, and NSIS setup generation. The Android APK passed package/archive checks. Windows registry, installer UI, connected-device install, and visible guest-window behavior still require validation on a Windows host with a configured Android guest.
 
-## Install the Android app
+## Install WinDroid APK
 
-With Android platform-tools installed and an Android device connected over ADB:
+Install with Android platform-tools and a connected Android device or emulator:
 
 ```sh
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 adb shell monkey -p com.windroid -c android.intent.category.LAUNCHER 1
 ```
+
+## Install Fusion setup
+
+Download `APKRunner-Universal-Setup.exe` from the [v6.0 release](https://github.com/MaazX67/WinDroid/releases/tag/v6.0-full-functional) and run it. The per-user installer places Fusion and the bundled ADB files under `%LOCALAPPDATA%\Programs\APKRunnerFusion`, adds a desktop shortcut, and registers Fusion as an option in the `.apk` Open With list. It does not install or provision an Android guest.
+
+## Use Open With
+
+In Windows Explorer, right-click an APK, choose **Open with**, and select **APKRunner Fusion**. Fusion sends `adb install -r` to the connected guest. It then asks for the Android package name if you want a desktop launch shortcut. The registration can also be requested directly with `APKRunner-Fusion.exe --register`.
+
+## Fusion host bridge
+
+Fusion is an ADB host client, not an APK compatibility runtime. It does not include Android, ART, Binder, Box64/FEX, ANGLE, WSL images, or a guest OS. Android guests must already be running and connected through ADB; displaying an app in a separate Windows window depends on the guest's own integration. Redroid container images are not bootable WSL distributions, so Fusion does not claim to download or boot them.
+
+There is no guarantee that all ARMv8a, ARMv7, x86_64, Unity, Unreal, Godot, or other APKs will run. The guest must support the APK's Android API level, ABI, native libraries, services, and graphics requirements. Use a guest/emulator that supports the app; performance and compatibility are guest-dependent.
+
+See [`apk-runner-fusion/README.md`](apk-runner-fusion/README.md) for build and command details.
 
 ## Run the CLI
 
@@ -25,11 +39,12 @@ Inspect an APK on Linux:
 ./build/APKRunner detect path/to/app.apk
 ```
 
-Install and launch an APK through an ADB-connected guest on Windows:
+Install and launch an APK through the bundled ADB client and a connected guest on Windows:
 
 ```powershell
-.\\build-fusion\\APKRunner-Fusion.exe install .\\app.apk
-.\\build-fusion\\APKRunner-Fusion.exe run com.example.app
+.\build-fusion\APKRunner-Fusion.exe devices
+.\build-fusion\APKRunner-Fusion.exe install .\app.apk
+.\build-fusion\APKRunner-Fusion.exe run com.example.app
 ```
 
 APKRunner-Universal is an early native C++ project for inspecting Android APK archives. Its current executable detects likely engine markers, checks for a manifest and DEX files, and lists common Android native ABIs. It does **not** execute APKs or produce standalone Windows executables.

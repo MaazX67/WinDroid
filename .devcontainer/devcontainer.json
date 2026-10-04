@@ -1,0 +1,16 @@
+{
+  "name": "APKRunner-Universal",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cmake-tools",
+        "ms-vscode.cpptools"
+      ]
+    }
+  },
+  "postCreateCommand": "cmake -S . -B build -G Ninja",
+  "forwardPorts": []
+}

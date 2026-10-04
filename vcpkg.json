@@ -1,0 +1,7 @@
+{
+  "name": "apkrunner-universal",
+  "version-string": "0.1.0",
+  "dependencies": [
+    "libzip"
+  ]
+}
